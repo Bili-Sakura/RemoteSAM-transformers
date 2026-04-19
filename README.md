@@ -55,7 +55,7 @@ We also build **RemoteSAM-270K** dataset, a large-scale collection of 270K Image
 
 ## Setting Up
 
-The code has been verified to work with PyTorch v1.13.0 and Python 3.8.
+The code is supported on PyTorch 2.x and Python 3.10+.
 1. Clone this repository.
 2. Change directory to root of this repository.
 
@@ -66,19 +66,17 @@ conda create -n RemoteSAM python==3.8
 conda activate RemoteSAM
 ```
 
-2. Install PyTorch v1.13.0 with a CUDA version that works on your cluster/machine (CUDA 11.6 is used in this example):
+2. Install PyTorch 2.x with a CUDA version that works on your cluster/machine. Example (CUDA 12.1):
 ```shell
-pip install torch==1.13.0+cu116 torchvision==0.14.0+cu116 torchaudio==0.13.0 --extra-index-url https://download.pytorch.org/whl/cu116
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
 
-3. Install mmcv from openmmlab:
-```shell
-pip install mmcv-full==1.7.1 -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.13.0/index.html
-```
-4. Install the packages in `requirements.txt` via `pip`:
+3. Install the packages in `requirements.txt` via `pip`:
 ```shell
 pip install -r requirements.txt
 ```
+
+4. (Optional) If you are migrating from an older environment, remove OpenMMLab dependencies (`mmcv`, `mmsegmentation`, `mmdet`) to avoid conflicts.
 ### The Initialization Weights for Training
 1. Create the `./pretrained_weights` directory where we will be storing the weights.
 ```shell
@@ -111,8 +109,7 @@ We use DistributedDataParallel from PyTorch for training. To run on 8 GPUs on a 
 More training setting can be change in args.py.
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-      python -m torch.distributed.launch \
-      --nproc_per_node 8 --master_port 12345 train.py \
+      torchrun --nproc_per_node=8 --master_port=12345 train.py \
       --epochs 40 --img_size 896 2>&1 | tee ./output
 ```
 ### Getting Started

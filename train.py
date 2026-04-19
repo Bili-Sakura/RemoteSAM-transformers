@@ -13,7 +13,7 @@ import numpy as np
 import gc
 import operator
 from functools import reduce
-from bert.modeling_bert import BertModel
+from transformers import BertModel
 from lib import segmentation
 from loss.loss import Loss
 

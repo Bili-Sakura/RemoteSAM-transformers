@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 import torch
 import torch.utils.data
 import utils
-from bert.modeling_bert import BertModel
+from transformers import BertModel
 from lib import segmentation
 from PIL import Image
 from data.DiverseDataset import DiverseDataset
