@@ -70,6 +70,10 @@ def criterion(input, target, weight=0.1):
     return Loss(weight=weight)(input, target)
 
 
+def _unwrap_model(module):
+    return module.module if hasattr(module, "module") else module
+
+
 def evaluate(model, data_loader, bert_model, epoch):
     model.eval()
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -225,10 +229,11 @@ def main(args):
     print(args.model)
     model = segmentation.__dict__[args.model](pretrained=args.pretrained_swin_weights,
                                               args=args)
-    model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
     model.cuda()
-    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank], find_unused_parameters=True)
-    single_model = model.module  #ddp
+    if utils.is_dist_avail_and_initialized():
+        model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank], find_unused_parameters=True)
+    single_model = _unwrap_model(model)
 
     # print(model)
     if args.model != 'lavt_one':
@@ -236,9 +241,10 @@ def main(args):
         bert_model = model_class.from_pretrained(args.ck_bert)
         bert_model.pooler = None  # a work-around for a bug in Transformers = 3.0.2 that appears for DistributedDataParallel
         bert_model.cuda()
-        bert_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(bert_model)
-        bert_model = torch.nn.parallel.DistributedDataParallel(bert_model, device_ids=[args.local_rank])
-        single_bert_model = bert_model
+        if utils.is_dist_avail_and_initialized():
+            bert_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(bert_model)
+            bert_model = torch.nn.parallel.DistributedDataParallel(bert_model, device_ids=[args.local_rank])
+        single_bert_model = _unwrap_model(bert_model)
     else:
         bert_model = None
         single_bert_model = None
@@ -263,16 +269,18 @@ def main(args):
             backbone_decay.append(m)
 
     if args.model != 'lavt_one':
+        bert_layer_count = min(10, len(single_bert_model.encoder.layer))
         params_to_optimize = [
             {'params': backbone_no_decay, 'weight_decay': 0.0},
             {'params': backbone_decay},
             {"params": [p for p in single_model.classifier.parameters() if p.requires_grad]},
             # the following are the parameters of bert
             {"params": reduce(operator.concat,
-                              [[p for p in single_bert_model.module.encoder.layer[i].parameters()
-                                if p.requires_grad] for i in range(10)])},
+                              [[p for p in single_bert_model.encoder.layer[i].parameters()
+                                 if p.requires_grad] for i in range(bert_layer_count)])},
         ]
     else:
+        text_layer_count = min(10, len(single_model.text_encoder.encoder.layer))
         params_to_optimize = [
             {'params': backbone_no_decay, 'weight_decay': 0.0},
             {'params': backbone_decay},
@@ -280,7 +288,7 @@ def main(args):
             # the following are the parameters of bert
             {"params": reduce(operator.concat,
                               [[p for p in single_model.text_encoder.encoder.layer[i].parameters()
-                                if p.requires_grad] for i in range(10)])},
+                                 if p.requires_grad] for i in range(text_layer_count)])},
         ]
 
     # optimizer

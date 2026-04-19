@@ -6,7 +6,6 @@ import numpy as np
 from .cross_scale_interaction import CIM
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from .checkpoint import load_checkpoint
-# from mmseg.utils import get_root_logger
 from typing import Optional
 from torch import Tensor
 from .various_receptive import VariousReceptive

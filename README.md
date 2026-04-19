@@ -55,7 +55,7 @@ We also build **RemoteSAM-270K** dataset, a large-scale collection of 270K Image
 
 ## Setting Up
 
-The code is supported on PyTorch 2.x and Python 3.10+.
+The code is supported on PyTorch >= 2.0.0 and Python 3.8+.
 1. Clone this repository.
 2. Change directory to root of this repository.
 
