@@ -6,7 +6,7 @@ from torchvision.transforms import functional as F1
 
 from torchvision.transforms import InterpolationMode
 import transforms as T
-from bert.tokenization_bert import BertTokenizer
+from transformers import BertModel, BertTokenizer
 
 import os
 import numpy as np

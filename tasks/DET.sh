@@ -6,7 +6,7 @@ FILE="./result/DET/DET.log"
 CATEGORY=("airplane" "airport" "baseballfield" "basketballcourt" "bridge" "chimney" "dam" "expressway-service-area" "expressway-toll-station" "golffield" "groundtrackfield" "harbor" "overpass" "ship" "stadium" "storagetank" "tenniscourt" "trainstation" "vehicle" "windmill")
 
 for i in "${!CATEGORY[@]}"; do
-    python -m torch.distributed.launch --nproc_per_node 1 --master_port 12345 \
+    torchrun --nproc_per_node=1 --master_port=12345 \
         ./tasks/code/eval/DET.py \
         --resume ./pretrained_weights/checkpoint.pth \
         --split test \

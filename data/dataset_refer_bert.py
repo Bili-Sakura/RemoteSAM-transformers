@@ -10,7 +10,7 @@ import torchvision.transforms.functional as TF
 import random
 import transformers
 
-from bert.tokenization_bert import BertTokenizer
+from transformers import BertTokenizer
 import pickle
 import h5py
 import json

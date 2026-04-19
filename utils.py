@@ -211,23 +211,33 @@ def save_on_master(*args, **kwargs):
 
 
 def init_distributed_mode(args):
+    def _prepare_output_dirs():
+        if args.output_dir:
+            mkdir(args.output_dir)
+        if args.model_id:
+            mkdir(os.path.join('./models/', args.model_id))
+
+    if 'LOCAL_RANK' in os.environ:
+        args.local_rank = int(os.environ['LOCAL_RANK'])
+    elif not hasattr(args, 'local_rank'):
+        args.local_rank = 0
+
     if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
-        rank = int(os.environ["RANK"])
+        rank = int(os.environ['RANK'])
         world_size = int(os.environ['WORLD_SIZE'])
         print(f"RANK and WORLD_SIZE in environment: {rank}/{world_size}")
+        args.distributed = True
     else:
-        rank = -1
-        world_size = -1
+        args.distributed = False
+        _prepare_output_dirs()
+        return
 
     torch.cuda.set_device(args.local_rank)
     torch.distributed.init_process_group(backend='nccl', init_method='env://', world_size=world_size, rank=rank)
     torch.distributed.barrier()
     setup_for_distributed(is_main_process())
 
-    if args.output_dir:
-        mkdir(args.output_dir)
-    if args.model_id:
-        mkdir(os.path.join('./models/', args.model_id))
+    _prepare_output_dirs()
 
 
 def M2B_wEPOC(ori_mask, new_mask, probs, area_threshold, conf_threshold, box_type):

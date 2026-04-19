@@ -7,7 +7,7 @@ import torch
 import torch.utils.data
 import utils
 import numpy as np
-from bert.modeling_bert import BertModel
+from transformers import BertModel
 from lib import segmentation
 from data.DiverseDataset import DiverseDataset
 from tasks.code.model import RemoteSAM

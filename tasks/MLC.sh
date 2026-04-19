@@ -3,7 +3,7 @@
 FILE="./result/MLC/MLC.log"
 : > $FILE
 
-python -m torch.distributed.launch --nproc_per_node 1 --master_port 12345 \
+torchrun --nproc_per_node=1 --master_port=12345 \
     ./tasks/code/eval/MLC.py \
     --resume ./pretrained_weights/checkpoint.pth \
     --split test \
